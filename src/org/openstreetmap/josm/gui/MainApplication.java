@@ -126,7 +126,11 @@ public class MainApplication extends Main {
     /**
      * Main application Startup
      */
-    public static void main(final String[] argArray) {
+    public static void main(String[] args) 
+    {
+	main2(args);
+    }
+    public static void main2(final String[] argArray) {
         I18n.init();
 
         Thread.setDefaultUncaughtExceptionHandler(new BugReportExceptionHandler());
