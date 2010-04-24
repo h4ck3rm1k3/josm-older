@@ -157,8 +157,8 @@ public final class AlignInCircleAction extends JosmAction {
                 north = north.add(y, MathContext.DECIMAL128);
             }
             BigDecimal nodesSize = new BigDecimal(nodes.size());
-            east = east.divide(nodesSize, MathContext.DECIMAL128);
-            north = north.divide(nodesSize, MathContext.DECIMAL128);
+            east = east.divide(nodesSize );//, MathContext.DECIMAL128);  error: class 'java.math.BigDecimal' has no method named 'divide' matching signature '(Ljava/math/BigDecimal;Ljava/math/MathContext;)Ljava/math/BigDecimal;'
+            north = north.divide(nodesSize);//, MathContext.DECIMAL128);
 
             EastNorth average = new EastNorth(east.doubleValue(), north.doubleValue());
             List<Node> newNodes = new LinkedList<Node>();
@@ -208,8 +208,8 @@ public final class AlignInCircleAction extends JosmAction {
 
             BigDecimal d = new BigDecimal(3, MathContext.DECIMAL128); // 1/2 * 6 = 3
             area  = area.multiply(d, MathContext.DECIMAL128);
-            north = north.divide(area, MathContext.DECIMAL128);
-            east = east.divide(area, MathContext.DECIMAL128);
+            north = north.divide(area ); //, MathContext.DECIMAL128);
+            east = east.divide(area ); //, MathContext.DECIMAL128);
 
             center = new EastNorth(east.doubleValue(), north.doubleValue());
 
