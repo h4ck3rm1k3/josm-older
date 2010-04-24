@@ -4,7 +4,7 @@ package org.openstreetmap.josm.io;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.net.HttpURLConnection;
-import java.net.Authenticator.RequestorType;
+//import java.net.Authenticator.RequestorType;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -80,7 +80,7 @@ public class OsmConnection {
         String token;
         try {
             synchronized (CredentialsManagerFactory.getCredentialManager()) {
-                response = CredentialsManagerFactory.getCredentialManager().getCredentials(RequestorType.SERVER, false /* don't know yet whether the credentials will succeed */);
+                response = CredentialsManagerFactory.getCredentialManager().getCredentials(/*RequestorType.SERVER,*/ false /* don't know yet whether the credentials will succeed */);
             }
         } catch (CredentialsManagerException e) {
             throw new OsmTransferException(e);

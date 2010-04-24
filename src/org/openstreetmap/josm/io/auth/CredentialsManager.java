@@ -2,7 +2,7 @@
 package org.openstreetmap.josm.io.auth;
 
 import java.net.PasswordAuthentication;
-import java.net.Authenticator.RequestorType;
+//import java.net.Authenticator.RequestorType;
 
 import org.openstreetmap.josm.data.oauth.OAuthToken;
 
@@ -27,7 +27,7 @@ public interface CredentialsManager {
      * @return the credentials
      * @throws CredentialsManagerException thrown if a problem occurs in a implementation of this interface
      */
-    public PasswordAuthentication lookup(RequestorType requestorType) throws CredentialsManagerException;
+    public PasswordAuthentication lookup(/*RequestorType requestorType*/) throws CredentialsManagerException;
 
     /**
      * Saves the credentials in <code>credentials</code> for the given service type.
@@ -37,7 +37,7 @@ public interface CredentialsManager {
      * @param credentials the credentials
      * @throws CredentialsManagerException thrown if a problem occurs in a implementation of this interface
      */
-    public void store(RequestorType requestorType, PasswordAuthentication credentials) throws CredentialsManagerException;
+    public void store(/*RequestorType requestorType,*/ PasswordAuthentication credentials) throws CredentialsManagerException;
 
     /**
      *
@@ -48,7 +48,7 @@ public interface CredentialsManager {
      * @throws CredentialsManagerException thrown if a problem occurs in a implementation of this interface
 
      */
-    public CredentialsManagerResponse getCredentials(RequestorType requestorType, boolean noSuccessWithLastResponse) throws CredentialsManagerException;
+    public CredentialsManagerResponse getCredentials(/*RequestorType requestorType, */ boolean noSuccessWithLastResponse) throws CredentialsManagerException;
 
     /**
      * Lookup the current OAuth Access Token to access the OSM server. Replies null, if no

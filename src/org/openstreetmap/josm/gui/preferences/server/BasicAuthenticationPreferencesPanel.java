@@ -7,7 +7,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.net.PasswordAuthentication;
-import java.net.Authenticator.RequestorType;
+//import java.net.Authenticator.RequestorType;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -104,7 +104,7 @@ public class BasicAuthenticationPreferencesPanel extends JPanel {
     public void initFromPreferences() {
         CredentialsManager cm = CredentialsManagerFactory.getCredentialManager();
         try {
-            PasswordAuthentication pa = cm.lookup(RequestorType.SERVER);
+            PasswordAuthentication pa = cm.lookup(/*RequestorType.SERVER*/);
             if (pa == null) {
                 tfOsmUserName.setText("");
                 tfOsmPassword.setText("");
@@ -128,7 +128,7 @@ public class BasicAuthenticationPreferencesPanel extends JPanel {
                     tfOsmUserName.getText().trim(),
                     tfOsmPassword.getPassword()
             );
-            cm.store(RequestorType.SERVER, pa);
+            cm.store(/*RequestorType.SERVER,*/ pa);
             // always save the username to the preferences if it isn't already saved there
             // by the credential manager
             if (! (cm instanceof JosmPreferencesCredentialManager)) {

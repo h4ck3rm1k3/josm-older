@@ -29,7 +29,9 @@ public  class DefaultAuthenticator extends Authenticator {
     }
 
     private CredentialsManager credentialManager;
-    private final Map<RequestorType, Boolean> credentialsTried = new HashMap<RequestorType, Boolean>();
+    //    private final Map<RequestorType, Boolean> credentialsTried = new HashMap<RequestorType, Boolean>();
+    private boolean credentialsTried = false;
+    
     private boolean enabled = true;
 
     /**
@@ -49,18 +51,18 @@ public  class DefaultAuthenticator extends Authenticator {
         if (!enabled)
             return null;
         try {
-            if (getRequestorType().equals(Authenticator.RequestorType.SERVER)) {
+            //if (getRequestorType().equals(Authenticator.RequestorType.SERVER)) {
                 // if we are working with OAuth we don't prompt for a password
                 //
                 String authMethod = Main.pref.get("osm-server.auth-method", "basic");
                 if (authMethod.equals("oauth"))
                     return null;
-            }
-            boolean tried = credentialsTried.get(getRequestorType()) != null;
-            CredentialsManagerResponse response = credentialManager.getCredentials(getRequestorType(), tried);
+		//}
+            Boolean tried = ! credentialsTried;
+            CredentialsManagerResponse response = credentialManager.getCredentials(/*getRequestorType(), */tried);
             if (response == null || response.isCanceled())
                 return null;
-            credentialsTried.put(getRequestorType(), true);
+            credentialsTried =true;
             return new PasswordAuthentication(response.getUsername(), response.getPassword());
         } catch(CredentialsManagerException e) {
             e.printStackTrace();

@@ -13,7 +13,7 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.PasswordAuthentication;
-import java.net.Authenticator.RequestorType;
+//import java.net.Authenticator.RequestorType;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -185,7 +185,7 @@ public class FullyAutomaticAuthorizationUI extends AbstractAuthorizationUI {
         super.initFromPreferences(pref);
         CredentialsManager cm = CredentialsManagerFactory.getCredentialManager();
         try {
-            PasswordAuthentication pa = cm.lookup(RequestorType.SERVER);
+            PasswordAuthentication pa = cm.lookup(/*RequestorType.SERVER*/);
             if (pa == null) {
                 tfUserName.setText("");
                 tfPassword.setText("");

@@ -13,7 +13,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.net.PasswordAuthentication;
 import java.net.ProxySelector;
-import java.net.Authenticator.RequestorType;
+//import java.net.Authenticator.RequestorType;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -322,7 +322,7 @@ public class ProxyPreferencesPanel extends VerticallyScrollablePanel {
         // the credentials manager
         CredentialsManager cm = CredentialsManagerFactory.getCredentialManager();
         try {
-            PasswordAuthentication pa = cm.lookup(RequestorType.PROXY);
+            PasswordAuthentication pa = cm.lookup(/*RequestorType.PROXY*/);
             if (pa == null) {
                 tfProxyHttpUser.setText("");
                 tfProxyHttpPassword.setText("");
@@ -400,7 +400,7 @@ public class ProxyPreferencesPanel extends VerticallyScrollablePanel {
                     tfProxyHttpUser.getText().trim(),
                     tfProxyHttpPassword.getPassword()
             );
-            cm.store(RequestorType.PROXY, pa);
+            cm.store(/*RequestorType.PROXY,*/ pa);
         } catch(CredentialsManagerException e) {
             e.printStackTrace();
         }
