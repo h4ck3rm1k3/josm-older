@@ -25,9 +25,12 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
+//import javax.xml.datatype.DatatypeConfigurationException;
+//import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
+
+// HACK! 
+import org.apache.xerces.jaxp.datatype.XMLGregorianCalendarImpl;
 
 /**
  * A static utility class dealing with parsing XML date quickly and formatting
@@ -44,23 +47,23 @@ public final class DateUtils {
      * with the timezone lookup, is very expensive.
      */
     private static GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
-    private static final DatatypeFactory XML_DATE;
+    //    private static final DatatypeFactory XML_DATE;
 
     static {
         calendar.setTimeInMillis(0);
 
-        DatatypeFactory fact = null;
-        try {
-            fact = DatatypeFactory.newInstance();
-        } catch(DatatypeConfigurationException ce) {
-            ce.printStackTrace();
-        }
-        XML_DATE = fact;
+        // DatatypeFactory fact = null;
+        // try {
+        //     fact = DatatypeFactory.newInstance();//error here
+        // } catch(DatatypeConfigurationException ce) {
+        //     ce.printStackTrace();
+        // }
+        // XML_DATE = fact;
     }
 
     public static synchronized Date fromString(String str) {
         // "2007-07-25T09:26:24{Z|{+|-}01:00}"
-        if (checkLayout(str, "xxxx-xx-xxTxx:xx:xxZ") ||
+        if (checkLayout(str, "xxxx-xx-xxTxx:xx:xxZ") || //BUG:  at org.openstreetmap.josm.tools.DateUtils.fromString(DateUtils.java:63)
                 checkLayout(str, "xxxx-xx-xxTxx:xx:xx") ||
                 checkLayout(str, "xxxx-xx-xxTxx:xx:xx+xx:00") ||
                 checkLayout(str, "xxxx-xx-xxTxx:xx:xx-xx:00")) {
@@ -108,7 +111,8 @@ public final class DateUtils {
         }
 
         try {
-            return XML_DATE.newXMLGregorianCalendar(str).toGregorianCalendar().getTime();
+
+            return new XMLGregorianCalendarImpl(str).toGregorianCalendar().getTime();
         } catch (Exception ex) {
             return new Date();
         }
@@ -116,7 +120,7 @@ public final class DateUtils {
 
     public static synchronized String fromDate(Date date) {
         calendar.setTime(date);
-        XMLGregorianCalendar xgc = XML_DATE.newXMLGregorianCalendar(calendar);
+        XMLGregorianCalendar xgc = new XMLGregorianCalendarImpl(calendar);
         if (calendar.get(Calendar.MILLISECOND) == 0) xgc.setFractionalSecond(null);
         return xgc.toXMLFormat();
     }
