@@ -7,14 +7,14 @@ import java.util.Iterator;
 
 import org.openstreetmap.josm.tools.Predicate;
 
-class DatasetCollection extends AbstractCollection<OsmPrimitive> {
+public class DatasetCollection<T extends OsmPrimitive> extends AbstractCollection<T> {
 
-    private class FilterIterator implements Iterator<OsmPrimitive> {
+    private class FilterIterator implements Iterator<T> {
 
-        private final Iterator<OsmPrimitive> iterator;
+        private final Iterator<? extends OsmPrimitive> iterator;
         private OsmPrimitive current;
 
-        public FilterIterator(Iterator<OsmPrimitive> iterator) {
+        public FilterIterator(Iterator<? extends OsmPrimitive> iterator) {
             this.iterator = iterator;
         }
 
@@ -34,11 +34,12 @@ class DatasetCollection extends AbstractCollection<OsmPrimitive> {
             return current != null;
         }
 
-        public OsmPrimitive next() {
+        @SuppressWarnings("unchecked")
+        public T next() {
             findNext();
             OsmPrimitive old = current;
             current = null;
-            return old;
+            return (T)old;
         }
 
         public void remove() {
@@ -46,23 +47,23 @@ class DatasetCollection extends AbstractCollection<OsmPrimitive> {
         }
     }
 
-    private final Collection<OsmPrimitive> primitives;
+    private final Collection<? extends OsmPrimitive> primitives;
     private final Predicate<OsmPrimitive> predicate;
 
-    public DatasetCollection(Collection<OsmPrimitive> primitives, Predicate<OsmPrimitive> predicate) {
+    public DatasetCollection(Collection<? extends OsmPrimitive> primitives, Predicate<OsmPrimitive> predicate) {
         this.primitives = primitives;
         this.predicate = predicate;
     }
 
     @Override
-    public Iterator<OsmPrimitive> iterator() {
+    public Iterator<T> iterator() {
         return new FilterIterator(primitives.iterator());
     }
 
     @Override
     public int size() {
         int size = 0;
-        Iterator<OsmPrimitive> it = iterator();
+        Iterator<T> it = iterator();
         while (it.hasNext()) {
             size++;
             it.next();
@@ -74,4 +75,5 @@ class DatasetCollection extends AbstractCollection<OsmPrimitive> {
     public boolean isEmpty() {
         return !iterator().hasNext();
     }
+
 }

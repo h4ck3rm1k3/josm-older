@@ -150,6 +150,7 @@ public class OsmApi extends OsmConnection {
 		    }
 
 
+            for (int i=0; i< atts.getLength(); i++) {
                 capabilities.put(qName, atts.getQName(i), atts.getValue(i));
             }
         }

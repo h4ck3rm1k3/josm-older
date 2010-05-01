@@ -9,17 +9,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.openstreetmap.josm.data.SelectionChangedListener;
 import org.openstreetmap.josm.data.coor.LatLon;
-import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.event.AbstractDatasetChangedEvent;
 import org.openstreetmap.josm.data.osm.event.ChangesetIdChangedEvent;
 import org.openstreetmap.josm.data.osm.event.DataChangedEvent;
@@ -30,6 +27,8 @@ import org.openstreetmap.josm.data.osm.event.PrimitivesRemovedEvent;
 import org.openstreetmap.josm.data.osm.event.RelationMembersChangedEvent;
 import org.openstreetmap.josm.data.osm.event.TagsChangedEvent;
 import org.openstreetmap.josm.data.osm.event.WayNodesChangedEvent;
+import org.openstreetmap.josm.gui.tagging.ac.AutoCompletionManager;
+import org.openstreetmap.josm.tools.Predicate;
 
 /**
  * DataSet is the data behind the application. It can consists of only a few points up to the whole
@@ -54,7 +53,7 @@ public class DataSet implements Cloneable {
         }
     }
 
-    private Storage<OsmPrimitive> allPrimitives = new Storage<OsmPrimitive>(new IdHash());
+    private Storage<OsmPrimitive> allPrimitives = new Storage<OsmPrimitive>(new IdHash(), 16, true);
     private Map<PrimitiveId, OsmPrimitive> primitivesMap = allPrimitives.foreignKey(new IdHash());
     private List<DataSetListener> listeners = new ArrayList<DataSetListener>();
     // Number of open calls to beginUpdate
@@ -69,6 +68,19 @@ public class DataSet implements Cloneable {
      */
     public int getHighlightUpdateCount() {
         return highlightUpdateCount;
+    }
+
+    /**
+     * Maintain a list of used tags for autocompletion
+     */
+    private AutoCompletionManager autocomplete;
+
+    public AutoCompletionManager getAutoCompletionManager() {
+        if (autocomplete == null) {
+            autocomplete = new AutoCompletionManager(this);
+            addDataSetListener(autocomplete);
+        }
+        return autocomplete;
     }
 
     /**
@@ -100,13 +112,17 @@ public class DataSet implements Cloneable {
      */
     private QuadBuckets<Node> nodes = new QuadBuckets<Node>();
 
+    private <T extends OsmPrimitive> Collection<T> getPrimitives(Predicate<OsmPrimitive> predicate) {
+        return new DatasetCollection<T>(allPrimitives, predicate);
+    }
+
     /**
      * Replies an unmodifiable collection of nodes in this dataset
      *
      * @return an unmodifiable collection of nodes in this dataset
      */
     public Collection<Node> getNodes() {
-        return Collections.unmodifiableCollection(nodes);
+        return getPrimitives(OsmPrimitive.nodePredicate);
     }
 
     public List<Node> searchNodes(BBox bbox) {
@@ -126,7 +142,7 @@ public class DataSet implements Cloneable {
      * @return an unmodifiable collection of ways in this dataset
      */
     public Collection<Way> getWays() {
-        return Collections.unmodifiableCollection(ways);
+        return getPrimitives(OsmPrimitive.wayPredicate);
     }
 
     public List<Way> searchWays(BBox bbox) {
@@ -136,7 +152,7 @@ public class DataSet implements Cloneable {
     /**
      * All relations/relationships
      */
-    private Collection<Relation> relations = new LinkedList<Relation>();
+    private Collection<Relation> relations = new ArrayList<Relation>();
 
     /**
      * Replies an unmodifiable collection of relations in this dataset
@@ -144,7 +160,7 @@ public class DataSet implements Cloneable {
      * @return an unmodifiable collection of relations in this dataset
      */
     public Collection<Relation> getRelations() {
-        return Collections.unmodifiableCollection(relations);
+        return getPrimitives(OsmPrimitive.relationPredicate);
     }
 
     public List<Relation> searchRelations(BBox bbox) {
@@ -167,26 +183,26 @@ public class DataSet implements Cloneable {
      * @return A collection containing all primitives of the dataset. Data are not ordered
      */
     public Collection<OsmPrimitive> allPrimitives() {
-        return Collections.unmodifiableCollection(allPrimitives);
+        return getPrimitives(OsmPrimitive.allPredicate);
     }
 
     /**
      * @return A collection containing all not-deleted primitives (except keys).
      */
     public Collection<OsmPrimitive> allNonDeletedPrimitives() {
-        return new DatasetCollection(allPrimitives, OsmPrimitive.nonDeletedPredicate);
+        return getPrimitives(OsmPrimitive.nonDeletedPredicate);
     }
 
     public Collection<OsmPrimitive> allNonDeletedCompletePrimitives() {
-        return new DatasetCollection(allPrimitives, OsmPrimitive.nonDeletedCompletePredicate);
+        return getPrimitives(OsmPrimitive.nonDeletedCompletePredicate);
     }
 
     public Collection<OsmPrimitive> allNonDeletedPhysicalPrimitives() {
-        return new DatasetCollection(allPrimitives, OsmPrimitive.nonDeletedPhysicalPredicate);
+        return getPrimitives(OsmPrimitive.nonDeletedPhysicalPredicate);
     }
 
     public Collection<OsmPrimitive> allModifiedPrimitives() {
-        return new DatasetCollection(allPrimitives, OsmPrimitive.modifiedPredicate);
+        return getPrimitives(OsmPrimitive.modifiedPredicate);
     }
 
     /**
@@ -208,7 +224,7 @@ public class DataSet implements Cloneable {
             relations.add((Relation) primitive);
         }
         allPrimitives.add(primitive);
-        primitive.setDataset(this);        
+        primitive.setDataset(this);
         firePrimitivesAdded(Collections.singletonList(primitive), false);
     }
 
@@ -473,14 +489,32 @@ public class DataSet implements Cloneable {
             setDisabled();
             return;
         }
-        clearDisabled(nodes);
-        clearDisabled(ways);
-        clearDisabled(relations);
+        clearDisabled(allPrimitives());
         for (OsmPrimitive o : osm)
             if (o != null) {
                 o.setDisabled(true);
             }
     }
+
+    public void setDisabled(Collection<? extends OsmPrimitive> selection) {
+        clearDisabled(nodes);
+        clearDisabled(ways);
+        clearDisabled(relations);
+        for (OsmPrimitive osm : selection) {
+            osm.setDisabled(true);
+        }
+    }
+
+    /**
+     * Remove the disabled parameter from every value in the collection.
+     * @param list The collection to remove the disabled parameter from.
+     */
+    private void clearDisabled(Collection<? extends OsmPrimitive> list) {
+        for (OsmPrimitive osm : list) {
+            osm.setDisabled(false);
+        }
+    }
+
 
     public void setFiltered(Collection<? extends OsmPrimitive> selection) {
         clearFiltered(nodes);
@@ -505,15 +539,6 @@ public class DataSet implements Cloneable {
             }
     }
 
-    public void setDisabled(Collection<? extends OsmPrimitive> selection) {
-        clearDisabled(nodes);
-        clearDisabled(ways);
-        clearDisabled(relations);
-        for (OsmPrimitive osm : selection) {
-            osm.setDisabled(true);
-        }
-    }
-
     /**
      * Remove the filtered parameter from every value in the collection.
      * @param list The collection to remove the filtered parameter from.
@@ -523,17 +548,6 @@ public class DataSet implements Cloneable {
             return;
         for (OsmPrimitive osm : list) {
             osm.setFiltered(false);
-        }
-    }
-    /**
-     * Remove the disabled parameter from every value in the collection.
-     * @param list The collection to remove the disabled parameter from.
-     */
-    private void clearDisabled(Collection<? extends OsmPrimitive> list) {
-        if (list == null)
-            return;
-        for (OsmPrimitive osm : list) {
-            osm.setDisabled(false);
         }
     }
 
@@ -641,20 +655,6 @@ public class DataSet implements Cloneable {
         return result;
     }
 
-    public Set<Long> getPrimitiveIds() {
-        HashSet<Long> ret = new HashSet<Long>();
-        for (OsmPrimitive primitive : nodes) {
-            ret.add(primitive.getId());
-        }
-        for (OsmPrimitive primitive : ways) {
-            ret.add(primitive.getId());
-        }
-        for (OsmPrimitive primitive : relations) {
-            ret.add(primitive.getId());
-        }
-        return ret;
-    }
-
     protected void deleteWay(Way way) {
         way.setNodes(null);
         way.setDeleted(true);
@@ -716,32 +716,6 @@ public class DataSet implements Cloneable {
         } else {
             unlinkPrimitiveFromRelations(referencedPrimitive);
         }
-    }
-
-    /**
-     * Replies a list of parent relations which refer to the relation
-     * <code>child</code>. Replies an empty list if child is null.
-     *
-     * @param child the child relation
-     * @return a list of parent relations which refer to the relation
-     * <code>child</code>
-     */
-    public List<Relation> getParentRelations(Relation child) {
-        ArrayList<Relation> parents = new ArrayList<Relation>();
-        if (child == null)
-            return parents;
-        for (Relation parent : relations) {
-            if (parent == child) {
-                continue;
-            }
-            for (RelationMember member: parent.getMembers()) {
-                if (member.refersTo(child)) {
-                    parents.add(parent);
-                    break;
-                }
-            }
-        }
-        return parents;
     }
 
     /**
